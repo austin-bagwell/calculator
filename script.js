@@ -1,6 +1,7 @@
 "use strict";
 // clone of iPhone SE calculator (basic operations only)
 // TODO
+// FIXME guess I need to add another operand to account for order of operations
 // decimal is non functional
 // add the responsive Clear/All Clear button as seen on iPhone
 // HTML/CSS needs a major revamp
@@ -15,6 +16,7 @@ const calc = {
   currentVal: 0,
   previousVal: 0,
   function: false,
+  decimal: false,
 
   // METHODS
   inputInt(val) {
@@ -26,6 +28,7 @@ const calc = {
   clear() {
     this.currentVal = 0;
     this.previousVal = 0;
+    this.decimal = false;
     display.innerText = 0;
   },
   sign() {
@@ -36,20 +39,21 @@ const calc = {
     this.currentVal = -this.currentVal;
     display.innerText = String(this.currentVal);
   },
+  // need to do some rounding to account for weird JS number issues
   percentage() {
-    this.currentVal /= 100;
+    this.currentVal = Number(this.currentVal) / 100;
   },
   add() {
-    this.currentVal += this.previousVal;
+    this.currentVal += Number(this.previousVal);
   },
   subtract() {
-    this.currentVal = this.previousVal - this.currentVal;
+    this.currentVal = Number(this.previousVal) - Number(this.currentVal);
   },
   multiply() {
-    this.currentVal *= this.previousVal;
+    this.currentVal *= Number(this.previousVal);
   },
   divide() {
-    this.currentVal = this.previousVal / this.currentVal;
+    this.currentVal = Number(this.previousVal) / Number(this.currentVal);
   },
 };
 
@@ -60,17 +64,33 @@ buttons.forEach(function (button) {
     const value = button.value;
     const btnClass = button.className;
 
-    // TODO handling for decimal values
-
-    if (btnClass === "number-btn") {
-      calc.inputInt(value);
+    if (button.id === "decimal" && calc.decimal === false) {
+      calc.currentVal += ".";
+      calc.decimal = true;
       display.innerText = calc.currentVal;
     }
+
+    if (button.id === "percent") {
+      calc.percentage();
+      display.innerText = calc.currentVal;
+    }
+
+    if (btnClass === "number-btn") {
+      if (!calc.decimal) {
+        calc.inputInt(value);
+        display.innerText = calc.currentVal;
+      } else {
+        calc.currentVal = calc.currentVal.concat(value);
+        display.innerText = calc.currentVal;
+      }
+    }
+
     // how to dynamically call methods using btn.value?
     if (btnClass === "function-btn") {
       calc.function = value;
       calc.previousVal = calc.currentVal;
       calc.currentVal = 0;
+      calc.decimal = false;
     }
 
     if (button.id === "equals") {
