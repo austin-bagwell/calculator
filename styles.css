@@ -1,0 +1,110 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-size: large;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  background-color: black;
+}
+.container {
+  display: flex;
+  margin: 100px auto;
+  padding: 50px;
+  max-width: 400px;
+  background-color: black;
+  border: 1px solid ghostwhite;
+}
+
+#display {
+  background-color: aliceblue;
+  text-align: right;
+  font-size: large;
+  font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande",
+    "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+}
+
+.display-box {
+  display: block;
+  margin-bottom: 5px;
+  width: 95%;
+  border-radius: 10px;
+  height: 2rem;
+}
+
+.button-container {
+  align-self: center;
+}
+
+table {
+  margin: 0 auto;
+}
+
+td {
+  vertical-align: baseline;
+  align-self: right;
+  padding: 0px;
+}
+
+/* tr {
+  padding: 30px;
+} */
+
+.calculator button {
+  display: flexbox;
+  font-size: larger;
+  border-radius: 25px;
+  height: 50px;
+  width: 50px;
+  max-height: 100px;
+  max-width: 100px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#display {
+  margin: 0;
+  margin-right: 10px;
+}
+
+.function-btn {
+  background-color: rgb(245, 159, 1);
+  color: whitesmoke;
+}
+
+.function-btn:hover {
+  color: black;
+  background-color: rgb(250, 197, 98);
+}
+
+.operator-btn {
+  background-color: rgb(205, 205, 205);
+}
+
+.operator-btn:hover {
+  background-color: rgb(246, 244, 244);
+}
+
+.number-btn {
+  background-color: rgb(105, 105, 105);
+  color: whitesmoke;
+}
+
+.number-btn:hover {
+  background-color: rgb(195, 195, 195);
+}
+
+#equals {
+  background-color: rgb(245, 159, 1);
+  color: whitesmoke;
+}
+
+#equals:hover {
+  color: black;
+  background-color: rgb(250, 197, 98);
+}
+
+#zero {
+  width: 100%;
+}
