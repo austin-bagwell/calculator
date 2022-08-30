@@ -95,6 +95,15 @@ td {
   background-color: rgb(195, 195, 195);
 }
 
+#decimal {
+  background-color: rgb(105, 105, 105);
+  color: whitesmoke;
+}
+
+#decimal:hover {
+  background-color: rgb(195, 195, 195);
+}
+
 #equals {
   background-color: rgb(245, 159, 1);
   color: whitesmoke;
