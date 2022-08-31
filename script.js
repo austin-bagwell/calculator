@@ -1,13 +1,19 @@
 "use strict";
 // clone of iPhone SE calculator (basic operations only)
 // TODO
-// FIXME guess I need to add another operand to account for order of operations
-// decimals are still weird - can't add zeros immediately after the decimal ex .00X no worky - probably b/c x.0 can't be coercered into a Number
-// also need to look at werid
-// add the responsive Clear/All Clear button as seen on iPhone
+
+// FIXME Need to add another operand to account for order of operations
+
+// Solving JS floating point math issues .1 +.2 = .300000000000004
+// To solve the problem above, it helps to multiply and divide:
+// let x = (0.2 * 10 + 0.1 * 10) / 10;
+// how/when to implement that?
+
+// Clear/All Clear button needs fine tuning
+
 // HTML/CSS needs a major revamp
-// refactor JS for cleaner code
 // add handling for keyboard entry ?(if(keypress is in [keyboard, events, in, array] do the operation at the index that matches the key event...something like that)
+// refactor as needed
 
 let display = document.querySelector("#display");
 const buttons = document.querySelectorAll("button");
@@ -18,6 +24,10 @@ const calc = {
   currentVal: 0,
   previousVal: 0,
   function: false,
+  // will need these for correct order of operations
+  operator1: false,
+  operator2: false,
+
   decimal: false,
 
   // METHODS
