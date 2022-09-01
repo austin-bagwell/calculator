@@ -21,131 +21,174 @@ const clearBtn = document.querySelector("#clear");
 
 const calc = {
   // STATE
-  currentVal: 0,
-  previousVal: 0,
-  function: false,
-  // will need these for correct order of operations
+  memory: [],
+  displayVal: "",
   operator1: false,
   operator2: false,
-
   decimal: false,
+  orderOperations: false,
+  repeatEqual: false,
 
   // METHODS
   inputInt(val) {
-    this.currentVal =
-      this.currentVal >= 0
-        ? this.currentVal * 10 + Number(val)
-        : this.currentVal * 10 + -Number(val);
+    this.displayVal =
+      this.displayVal >= 0
+        ? this.displayVal * 10 + Number(val)
+        : this.displayVal * 10 + -Number(val);
   },
+  add: (val1, val2) => {
+    return (Number(val1) + Number(val2)).toString();
+  },
+  subtract: (val1, val2) => {
+    return (Number(val1) - Number(val2)).toString();
+  },
+  multiply: (val1, val2) => {
+    return (Number(val1) * Number(val2)).toString();
+  },
+  divide: (val1, val2) => {
+    return (Number(val1) / Number(val2)).toString();
+  },
+
   clear() {
-    this.currentVal = 0;
+    this.displayVal = "";
     this.decimal = false;
-    // maybe reset function?
-    // this.function = false;
-    display.innerText = 0;
+    display.innerText = "0";
   },
 
   allClear() {
-    this.currentVal = 0;
-    this.previousVal = 0;
+    this.memory = [];
     this.decimal = false;
-    this.function = false;
-    display.innerText = 0;
+    this.operator1 = false;
+    this.operator2 = false;
+    this.orderOperations = false;
+    this.repeatEqual = false;
+    display.innerText = "0";
   },
+
   sign() {
     // not quite matching iPhone functionality here -- I want sign() > -0 > -x
-    // this.currentVal != 0
-    //   ? (this.currentVal = -this.currentVal)
-    //   : (this.currentVal = String("-0"));
-    this.currentVal = -this.currentVal;
-    display.innerText = String(this.currentVal);
+    // this.displayVal != 0
+    //   ? (this.displayVal = -this.displayVal)
+    //   : (this.displayVal = String("-0"));
+    this.displayVal = -Number(this.displayVal);
+    this.displayVal = String(this.displayVal);
+    display.innerText = this.displayVal;
   },
   // need to do some rounding to account for weird JS number issues
   percentage() {
-    this.currentVal = Number(this.currentVal) / 100;
-  },
-  add() {
-    this.currentVal = Number(this.currentVal);
-    this.previousVal = Number(this.previousVal);
-    this.currentVal += this.previousVal;
-  },
-  subtract() {
-    this.currentVal = Number(this.currentVal);
-    this.previousVal = Number(this.previousVal);
-    this.currentVal = this.previousVal - this.currentVal;
-  },
-  multiply() {
-    this.currentVal = Number(this.currentVal);
-    this.previousVal = Number(this.previousVal);
-    this.currentVal *= this.previousVal;
-  },
-  divide() {
-    this.currentVal = Number(this.currentVal);
-    this.previousVal = Number(this.previousVal);
-    this.currentVal = this.previousVal / this.currentVal;
+    this.displayVal = Number(this.displayVal) / 100;
+    this.displayVal = String(this.displayVal);
   },
 };
 
-display.innerText = "0";
+// will be added to equalsBtn && functionBtn event listeners
+const evalOrderOperations = function () {
+  let orderOpsVal, newVal;
+  if (calc.operator1 && calc.operator2) {
+    orderOpsVal =
+      calc.operator2 === "multiply"
+        ? calc.multiply(calc.memory[1], calc.memory[2])
+        : calc.divide(calc.memory[1], calc.memory[2]);
+    console.log(`orderOpsVal: ${orderOpsVal}`);
+    newVal =
+      calc.operator1 === "add"
+        ? calc.add(calc.memory[0], orderOpsVal)
+        : calc.subtract(calc.memory[0], orderOpsVal);
+    console.log(`newVal: ${newVal}`);
+    calc.memory.push(newVal);
+    calc.memory.shift();
+    calc.memory.shift();
+    calc.operator1 = calc.operator2;
+    calc.operator2 = false;
+    calc.displayVal = newVal;
+    display.innerText = calc.displayVal;
+  } else
+    return false; /* do i need to return here if the If evals to false? idk yet */
+};
 
 buttons.forEach(function (button) {
   button.addEventListener("click", function () {
-    const value = button.value;
+    const btnValue = button.value;
     const btnClass = button.className;
 
+    // INPUT NUMBER VALUES AS STRINGS
     if (btnClass === "number-btn") {
       if (!calc.decimal) {
-        calc.inputInt(value);
-        display.innerText = calc.currentVal;
-        calc.currentVal = Number(calc.currentVal);
+        calc.displayVal = calc.displayVal.concat(btnValue);
+        display.innerText = calc.displayVal;
+        // calc.displayVal = Number(calc.displayVal);
       } else {
-        calc.currentVal = calc.currentVal.concat(value);
-        display.innerText = calc.currentVal;
-        // calc.currentVal = Number(calc.currentVal);
+        calc.displayVal = calc.displayVal.concat(btnValue);
+        display.innerText = calc.displayVal;
       }
     }
-
-    // how to dynamically call methods using btn.value?
+    // OPERATIONS
     if (btnClass === "function-btn") {
-      calc.function = value;
-      calc.previousVal = Number(calc.currentVal);
-      calc.currentVal = 0;
-      calc.decimal = false;
+      calc.memory.push(calc.displayVal);
+      // with 2+6*2 :
+      // currently yielding memory ["2", 14", 4] , displayVal 4
+      // no idea why, but I guess that's not bad for a first attempt
+      // might be running the other stuff below in addition to evalOrderOperations()
+      calc.displayVal = "";
+      evalOrderOperations();
+
+      if (!calc.operator1) {
+        calc.operator1 = btnValue;
+        // } else if (btnValue === "add" || btnValue === "subtract") {
+        //   calc.displayVal =
+        //     calc.operator1 === "add"
+        //       ? calc.add(calc.memory[0], calc.memory[1])
+        //       : calc.subtract(calc.memory[0], calc.memory[1]);
+        //   calc.memory.shift();
+        //   calc.memory.push(calc.displayVal);
+      } else calc.operator2 = btnValue;
     }
 
     if (button.id === "equals") {
-      if (calc.function === "add") {
-        calc.add();
-      } else if (calc.function === "subtract") {
-        calc.subtract();
-      } else if (calc.function === "multiply") {
-        calc.multiply();
-      } else if (calc.function === "divide") {
-        calc.divide();
+      // the below currently only works for addition, no handling for orderOfOperations
+      // the evaluationOrderOperations() will need to live somewhere in here
+      calc.memory.push(calc.displayVal);
+      evalOrderOperations();
+      display;
+
+      if (!calc.repeatEqual) {
+        if (calc.operator1 === "add") {
+          calc.memory.push(calc.displayVal);
+          calc.displayVal = calc.add(calc.memory[0], calc.displayVal);
+        }
+        calc.repeatEqual = true;
+        // calc.memory.shift();
+        display.innerText = calc.displayVal;
+      } else {
+        if (calc.operator1 === "add") {
+          calc.memory.push(calc.displayVal);
+          calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
+          calc.memory[1] = calc.displayVal;
+          display.innerText = calc.displayVal;
+        }
       }
-      display.innerText = calc.currentVal;
-      calc.decimal = false;
     }
 
     // FUNTIONS
     if (button.id === "clear") {
-      calc.currentVal == 0 ? calc.allClear() : calc.clear();
+      calc.displayVal == 0 ? calc.allClear() : calc.clear();
     }
     if (button.id === "sign") {
       calc.sign();
     }
     if (button.id === "percent") {
       calc.percentage();
-      display.innerText = calc.currentVal;
+      display.innerText = calc.displayVal;
     }
     if (button.id === "decimal" && calc.decimal === false) {
-      calc.currentVal += ".";
+      calc.displayVal += ".";
       calc.decimal = true;
-      display.innerText = calc.currentVal;
+      display.innerText = calc.displayVal;
     }
 
     // not quite right, here's what I want: after "1 + 3" > Clear, btn = AC display = 0 "+" button has hover effect to show that is the previously selected operation
-    calc.currentVal == 0 && !calc.function
+    // needs a refactor post PEMDAS update anyhow
+    calc.displayVal == 0 && !calc.function
       ? (clearBtn.innerText = "AC")
       : (clearBtn.innerText = "C");
   });
