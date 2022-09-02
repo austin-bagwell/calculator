@@ -174,7 +174,7 @@ buttons.forEach(function (button) {
         display.innerText = calc.displayVal;
         calc.repeatEqual = true;
         // for when user keeps hitting =
-      } else {
+      } else if (calc.repeatEqual && !calc.operator2) {
         if (calc.operator1 === "add") {
           calc.memory[1] = calc.displayVal;
           calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
