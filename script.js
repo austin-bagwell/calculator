@@ -71,34 +71,33 @@ const calc = {
   },
   // need to do some rounding to account for weird JS number issues
   percentage() {
-    this.displayVal = Number(this.displayVal) / 100;
-    this.displayVal = String(this.displayVal);
+    this.displayVal = (Number(this.displayVal) / 100).toString();
+    // this.displayVal = String(this.displayVal);
   },
 };
 
 // will be added to equalsBtn && functionBtn event listeners
+// how to disable adding to memory if a function is pressed multiple times
 const evalOrderOperations = function () {
   let orderOpsVal, newVal;
-  if (calc.operator1 && calc.operator2) {
-    orderOpsVal =
-      calc.operator2 === "multiply"
-        ? calc.multiply(calc.memory[1], calc.memory[2])
-        : calc.divide(calc.memory[1], calc.memory[2]);
-    console.log(`orderOpsVal: ${orderOpsVal}`);
-    newVal =
-      calc.operator1 === "add"
-        ? calc.add(calc.memory[0], orderOpsVal)
-        : calc.subtract(calc.memory[0], orderOpsVal);
-    console.log(`newVal: ${newVal}`);
-    calc.memory.push(newVal);
-    calc.memory.shift();
-    calc.memory.shift();
-    calc.operator1 = calc.operator2;
-    calc.operator2 = false;
-    calc.displayVal = newVal;
-    display.innerText = calc.displayVal;
-  } else
-    return false; /* do i need to return here if the If evals to false? idk yet */
+  orderOpsVal =
+    calc.operator2 === "multiply"
+      ? calc.multiply(calc.memory[1], calc.memory[2])
+      : calc.divide(calc.memory[1], calc.memory[2]);
+  console.log(`orderOpsVal: ${orderOpsVal}`);
+  newVal =
+    calc.operator1 === "add"
+      ? calc.add(calc.memory[0], orderOpsVal)
+      : calc.subtract(calc.memory[0], orderOpsVal);
+  console.log(`newVal: ${newVal}`);
+  calc.memory.push(newVal);
+  calc.memory.shift();
+  calc.memory.shift();
+
+  calc.operator1 = calc.operator2;
+  calc.operator2 = false;
+  calc.displayVal = newVal;
+  // display.innerText = calc.displayVal;
 };
 
 buttons.forEach(function (button) {
@@ -119,46 +118,78 @@ buttons.forEach(function (button) {
     }
     // OPERATIONS
     if (btnClass === "function-btn") {
-      calc.memory.push(calc.displayVal);
-      // with 2+6*2 :
-      // currently yielding memory ["2", 14", 4] , displayVal 4
-      // no idea why, but I guess that's not bad for a first attempt
-      // might be running the other stuff below in addition to evalOrderOperations()
-      calc.displayVal = "";
-      evalOrderOperations();
+      const lowOrderOperations = ["add", "subtract"];
+      const highOrderOperations = ["multiply", "divide"];
 
       if (!calc.operator1) {
+        calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
-        // } else if (btnValue === "add" || btnValue === "subtract") {
-        //   calc.displayVal =
-        //     calc.operator1 === "add"
-        //       ? calc.add(calc.memory[0], calc.memory[1])
-        //       : calc.subtract(calc.memory[0], calc.memory[1]);
-        //   calc.memory.shift();
-        //   calc.memory.push(calc.displayVal);
-      } else calc.operator2 = btnValue;
+      } else if (
+        lowOrderOperations.includes(calc.operator1) &&
+        highOrderOperations.includes(calc.operator2)
+      ) {
+        calc.memory.push(calc.displayVal);
+        evalOrderOperations();
+        display.innerText = calc.displayVal;
+      } else if (btnValue === "add" || btnValue === "subtract") {
+        calc.operator1 = btnValue;
+        calc.displayVal =
+          calc.operator1 === "add"
+            ? calc.add(calc.memory[0], calc.displayVal)
+            : calc.subtract(calc.memory[0], calc.displayVal);
+        calc.memory.shift();
+        calc.memory.push(calc.displayVal);
+        display.innerText = calc.displayVal;
+      } else {
+        calc.memory.push(calc.displayVal);
+        calc.operator2 = btnValue;
+      }
+
+      calc.displayVal = "";
     }
 
     if (button.id === "equals") {
-      // the below currently only works for addition, no handling for orderOfOperations
-      // the evaluationOrderOperations() will need to live somewhere in here
-      calc.memory.push(calc.displayVal);
-      evalOrderOperations();
-      display;
-
-      if (!calc.repeatEqual) {
-        if (calc.operator1 === "add") {
-          calc.memory.push(calc.displayVal);
-          calc.displayVal = calc.add(calc.memory[0], calc.displayVal);
-        }
-        calc.repeatEqual = true;
-        // calc.memory.shift();
-        display.innerText = calc.displayVal;
-      } else {
+      /*
+       *
+       * The chunk below describes the behavior that happens when no Order of Operations are engaged and the user continues to hit "=". Essentially, repeat the initial operation using the 2nd number that was pressed. So, 1 + 1 = = = 4 and so on
+       *
+       *
+       */
+      if (!calc.repeatEqual && !calc.operator2) {
         if (calc.operator1 === "add") {
           calc.memory.push(calc.displayVal);
           calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
+        } else if (calc.operator1 === "subtract") {
+          calc.memory.push(calc.displayVal);
+          calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
+          calc.memory[0] = calc.displayVal;
+        } else if (calc.operator1 === "multiply") {
+          calc.memory.push(calc.displayVal);
+          calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
+        } else if (calc.operator1 === "divide") {
+          calc.memory.push(calc.displayVal);
+          calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
+          calc.memory[0] = calc.displayVal;
+        }
+        display.innerText = calc.displayVal;
+        calc.repeatEqual = true;
+        // for when user keeps hitting =
+      } else {
+        if (calc.operator1 === "add") {
           calc.memory[1] = calc.displayVal;
+          calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
+          display.innerText = calc.displayVal;
+        } else if (calc.operator1 === "subtract") {
+          calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
+          calc.memory[0] = calc.displayVal;
+          display.innerText = calc.displayVal;
+        } else if (calc.operator1 === "multiply") {
+          calc.memory[1] = calc.displayVal;
+          calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
+          display.innerText = calc.displayVal;
+        } else if (calc.operator1 === "divide") {
+          calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
+          calc.memory[0] = calc.displayVal;
           display.innerText = calc.displayVal;
         }
       }
@@ -186,7 +217,8 @@ buttons.forEach(function (button) {
     calc.displayVal == 0 && !calc.function
       ? (clearBtn.innerText = "AC")
       : (clearBtn.innerText = "C");
-  });
 
-  // add a display.innerText = calc.displayVal here in lieu of calls elsewhere, maybe?
+    // add a display.innerText = calc.displayVal here in lieu of calls elsewhere, maybe?
+    // display.innerText = calc.displayVal;
+  });
 });
