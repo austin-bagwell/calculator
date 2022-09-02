@@ -26,16 +26,11 @@ const calc = {
   operator1: false,
   operator2: false,
   decimal: false,
-  orderOperations: false,
+  // currently not using this as a state anywhere
+  // orderOperations: false,
   repeatEqual: false,
 
   // METHODS
-  inputInt(val) {
-    this.displayVal =
-      this.displayVal >= 0
-        ? this.displayVal * 10 + Number(val)
-        : this.displayVal * 10 + -Number(val);
-  },
   add: (val1, val2) => {
     return (Number(val1) + Number(val2)).toString();
   },
@@ -169,9 +164,9 @@ buttons.forEach(function (button) {
       }
     }
 
-    // FUNTIONS
+    // FUNCTIONS
     if (button.id === "clear") {
-      calc.displayVal == 0 ? calc.allClear() : calc.clear();
+      calc.displayVal === "" ? calc.allClear() : calc.clear();
     }
     if (button.id === "sign") {
       calc.sign();
@@ -192,4 +187,6 @@ buttons.forEach(function (button) {
       ? (clearBtn.innerText = "AC")
       : (clearBtn.innerText = "C");
   });
+
+  // add a display.innerText = calc.displayVal here in lieu of calls elsewhere, maybe?
 });
