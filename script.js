@@ -76,6 +76,50 @@ const calc = {
   },
 };
 
+const initialEval = function (operator) {
+  if (!calc.repeatEqual && !calc.operator2) {
+    if (operator === "add") {
+      calc.memory.push(calc.displayVal);
+      calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
+    } else if (operator === "subtract") {
+      calc.memory.push(calc.displayVal);
+      calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
+      calc.memory[0] = calc.displayVal;
+    } else if (operator === "multiply") {
+      calc.memory.push(calc.displayVal);
+      calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
+    } else if (operator === "divide") {
+      calc.memory.push(calc.displayVal);
+      calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
+      calc.memory[0] = calc.displayVal;
+    }
+    display.innerText = calc.displayVal;
+    calc.repeatEqual = true;
+  }
+};
+
+const repeatedEval = function (operator) {
+  if (calc.repeatEqual && !calc.operator2) {
+    if (operator === "add") {
+      calc.memory[1] = calc.displayVal;
+      calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
+      display.innerText = calc.displayVal;
+    } else if (operator === "subtract") {
+      calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
+      calc.memory[0] = calc.displayVal;
+      display.innerText = calc.displayVal;
+    } else if (operator === "multiply") {
+      calc.memory[1] = calc.displayVal;
+      calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
+      display.innerText = calc.displayVal;
+    } else if (operator === "divide") {
+      calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
+      calc.memory[0] = calc.displayVal;
+      display.innerText = calc.displayVal;
+    }
+  }
+};
+
 // will be added to equalsBtn && functionBtn event listeners
 // how to disable adding to memory if a function is pressed multiple times
 const evalOrderOperations = function () {
@@ -156,42 +200,9 @@ buttons.forEach(function (button) {
        *
        */
       if (!calc.repeatEqual && !calc.operator2) {
-        if (calc.operator1 === "add") {
-          calc.memory.push(calc.displayVal);
-          calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
-        } else if (calc.operator1 === "subtract") {
-          calc.memory.push(calc.displayVal);
-          calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
-          calc.memory[0] = calc.displayVal;
-        } else if (calc.operator1 === "multiply") {
-          calc.memory.push(calc.displayVal);
-          calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
-        } else if (calc.operator1 === "divide") {
-          calc.memory.push(calc.displayVal);
-          calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
-          calc.memory[0] = calc.displayVal;
-        }
-        display.innerText = calc.displayVal;
-        calc.repeatEqual = true;
-        // for when user keeps hitting =
+        initialEval(calc.operator1);
       } else if (calc.repeatEqual && !calc.operator2) {
-        if (calc.operator1 === "add") {
-          calc.memory[1] = calc.displayVal;
-          calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
-          display.innerText = calc.displayVal;
-        } else if (calc.operator1 === "subtract") {
-          calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
-          calc.memory[0] = calc.displayVal;
-          display.innerText = calc.displayVal;
-        } else if (calc.operator1 === "multiply") {
-          calc.memory[1] = calc.displayVal;
-          calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
-          display.innerText = calc.displayVal;
-        } else if (calc.operator1 === "divide") {
-          calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
-          calc.memory[0] = calc.displayVal;
-          display.innerText = calc.displayVal;
-        }
+        repeatedEval(calc.operator1);
       }
     }
 
