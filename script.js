@@ -25,10 +25,12 @@ const calc = {
   displayVal: "",
   operator1: false,
   operator2: false,
+  storedVal: "",
+  storedFunc: false,
   decimal: false,
   // currently not using this as a state anywhere
   // orderOperations: false,
-  repeatEqual: false,
+  repeatEqualPress: false,
 
   // METHODS
   add: (val1, val2) => {
@@ -56,7 +58,7 @@ const calc = {
     this.operator1 = false;
     this.operator2 = false;
     this.orderOperations = false;
-    this.repeatEqual = false;
+    this.repeatEqualPress = false;
     display.innerText = "0";
   },
 
@@ -77,47 +79,35 @@ const calc = {
 };
 
 const initialEval = function (operator) {
-  if (!calc.repeatEqual && !calc.operator2) {
-    if (operator === "add") {
-      calc.memory.push(calc.displayVal);
-      calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
-    } else if (operator === "subtract") {
-      calc.memory.push(calc.displayVal);
-      calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
-      calc.memory[0] = calc.displayVal;
-    } else if (operator === "multiply") {
-      calc.memory.push(calc.displayVal);
-      calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
-    } else if (operator === "divide") {
-      calc.memory.push(calc.displayVal);
-      calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
-      calc.memory[0] = calc.displayVal;
-    }
-    display.innerText = calc.displayVal;
-    calc.repeatEqual = true;
+  calc.displayVal = display.innerText;
+
+  if (operator === "add") {
+    calc.displayVal = calc.add(calc.memory[0], calc.displayVal);
+  } else if (operator === "subtract") {
+    calc.displayVal = calc.subtract(calc.memory[0], calc.displayVal);
+    calc.memory[0] = calc.displayVal;
+  } else if (operator === "multiply") {
+    calc.displayVal = calc.multiply(calc.memory[0], calc.displayVal);
+  } else if (operator === "divide") {
+    calc.displayVal = calc.divide(calc.memory[0], calc.displayVal);
+    calc.memory[0] = calc.displayVal;
   }
+  // calc.memory.shift();
+  calc.repeatEqualPress = true;
+  display.innerText = calc.displayVal;
 };
 
 const repeatedEval = function (operator) {
-  if (calc.repeatEqual && !calc.operator2) {
-    if (operator === "add") {
-      calc.memory[1] = calc.displayVal;
-      calc.displayVal = calc.add(calc.memory[0], calc.memory[1]);
-      display.innerText = calc.displayVal;
-    } else if (operator === "subtract") {
-      calc.displayVal = calc.subtract(calc.memory[0], calc.memory[1]);
-      calc.memory[0] = calc.displayVal;
-      display.innerText = calc.displayVal;
-    } else if (operator === "multiply") {
-      calc.memory[1] = calc.displayVal;
-      calc.displayVal = calc.multiply(calc.memory[0], calc.memory[1]);
-      display.innerText = calc.displayVal;
-    } else if (operator === "divide") {
-      calc.displayVal = calc.divide(calc.memory[0], calc.memory[1]);
-      calc.memory[0] = calc.displayVal;
-      display.innerText = calc.displayVal;
-    }
+  if (operator === "add") {
+    calc.displayVal = calc.add(calc.storedVal, calc.displayVal);
+  } else if (operator === "subtract") {
+    calc.displayVal = calc.subtract(calc.displayVal, calc.storedVal);
+  } else if (operator === "multiply") {
+    calc.displayVal = calc.multiply(calc.storedVal, calc.displayVal);
+  } else if (operator === "divide") {
+    calc.displayVal = calc.divide(calc.displayVal, calc.storedVal);
   }
+  display.innerText = calc.displayVal;
 };
 
 // will be added to equalsBtn && functionBtn event listeners
@@ -144,6 +134,8 @@ const evalOrderOperations = function () {
   // display.innerText = calc.displayVal;
 };
 
+// TODO
+// EVENT LISTENERS
 buttons.forEach(function (button) {
   button.addEventListener("click", function () {
     const btnValue = button.value;
@@ -161,52 +153,88 @@ buttons.forEach(function (button) {
       }
     }
     // OPERATIONS
+    // FIXME
     if (btnClass === "function-btn") {
       const lowOrderOperations = ["add", "subtract"];
       const highOrderOperations = ["multiply", "divide"];
 
-      if (!calc.operator1) {
+      // this block handles operations chained after hitting "=" one or more times
+      // EX: 1 + 3 = 4 = 7 + 3 = 10
+      // EX: 5 * 5 = 25 = 125 / 100 = 1.25
+      if (!calc.operator1 && !calc.repeatEqualPress) {
         calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
-      } else if (
-        lowOrderOperations.includes(calc.operator1) &&
-        highOrderOperations.includes(calc.operator2)
-      ) {
+      } else if (!calc.operator1 && calc.repeatEqualPress) {
         calc.memory.push(calc.displayVal);
-        evalOrderOperations();
-        display.innerText = calc.displayVal;
-      } else if (btnValue === "add" || btnValue === "subtract") {
         calc.operator1 = btnValue;
-        calc.displayVal =
-          calc.operator1 === "add"
-            ? calc.add(calc.memory[0], calc.displayVal)
-            : calc.subtract(calc.memory[0], calc.displayVal);
-        calc.memory.shift();
-        calc.memory.push(calc.displayVal);
-        display.innerText = calc.displayVal;
-      } else {
-        calc.memory.push(calc.displayVal);
-        calc.operator2 = btnValue;
+        calc.repeatEqualPress = false;
+        calc.storedFunc = false;
+        calc.storedVal = "";
       }
+      // This block handles chained operator input for + and -
+      // EX: 1 + 1 + 1 + 1 = 4
+      // EX: 100 - 5 - 20 + 25 = 100
+      else if (
+        calc.operator1 &&
+        (btnValue === "add" || btnValue === "subtract")
+      ) {
+        calc.memory[1] = calc.displayVal;
+        calc.memory[0] =
+          calc.operator1 === "add"
+            ? calc.add(calc.memory[0], calc.memory[1])
+            : calc.subtract(calc.memory[0], calc.memory[1]);
+        calc.displayVal = calc.memory[0];
+        calc.operator1 = btnValue;
+        display.innerText = calc.memory[0];
+        calc.memory.pop();
+      }
+      // This block handles multiply and divide as the first operator
+
+      // else if (
+      //   (btnValue === "add" || btnValue === "subtract") &&
+      //   !calc.repeatEqualPress
+      // ) {
+      //   calc.memory[1] = calc.displayVal;
+      //   calc.memory[0] =
+      //     calc.operator1 === "add"
+      //       ? calc.add(calc.memory[0], calc.memory[1])
+      //       : calc.subtract(calc.memory[0], calc.memory[1]);
+      //   calc.displayVal = calc.memory[0];
+      //   calc.memory.pop();
+      //   display.innerText = calc.displayVal;
+      // } else if (
+      //   lowOrderOperations.includes(calc.operator1) &&
+      //   highOrderOperations.includes(calc.operator2)
+      // ) {
+      //   // initialEval(calc.operator1);
+      //   // calc.memory.push(calc.displayVal);
+      //   // evalOrderOperations();
+      //   // display.innerText = calc.displayVal;
+      // } else {
+      //   calc.memory.push(calc.displayVal);
+      //   calc.operator2 = btnValue;
+      // }
 
       calc.displayVal = "";
     }
 
+    // EQUALS
     if (button.id === "equals") {
-      /*
-       *
-       * The chunk below describes the behavior that happens when no Order of Operations are engaged and the user continues to hit "=". Essentially, repeat the initial operation using the 2nd number that was pressed. So, 1 + 1 = = = 4 and so on
-       *
-       *
-       */
-      if (!calc.repeatEqual && !calc.operator2) {
+      if (!calc.repeatEqualPress && !calc.operator2) {
+        calc.storedVal = calc.displayVal;
+        calc.storedFunc = calc.operator1;
         initialEval(calc.operator1);
-      } else if (calc.repeatEqual && !calc.operator2) {
-        repeatedEval(calc.operator1);
+        // calc.storedVal = calc.memory[0];
+        calc.memory = [];
+        calc.operator1 = false;
+      } else if (calc.repeatEqualPress) {
+        // calc.memory.shift();
+        repeatedEval(calc.storedFunc);
       }
     }
 
     // FUNCTIONS
+    // FIXME *** clear/allClear not working somewhere. will look after order of operations is sorted out better
     if (button.id === "clear") {
       calc.displayVal === "" ? calc.allClear() : calc.clear();
     }
