@@ -1,6 +1,6 @@
 "use strict";
 // clone of iPhone SE calculator (basic operations only)
-// TODO
+// TODO = flagged to fix, lower priority
 
 // FIXME Need to add another operand to account for order of operations
 
@@ -26,11 +26,10 @@ const calc = {
   operator1: false,
   operator2: false,
   storedVal: "",
-  storedFunc: false,
   decimal: false,
   // currently not using this as a state anywhere
   // orderOperations: false,
-  repeatEqualPress: false,
+  repeatedEqualPress: false,
 
   // METHODS
   add: (val1, val2) => {
@@ -47,8 +46,10 @@ const calc = {
   },
 
   clear() {
-    this.displayVal = "";
     this.decimal = false;
+    this.operator1 = false;
+    this.operator2 = false;
+    this.displayVal = "";
     display.innerText = "0";
   },
 
@@ -58,7 +59,7 @@ const calc = {
     this.operator1 = false;
     this.operator2 = false;
     this.orderOperations = false;
-    this.repeatEqualPress = false;
+    this.repeatedEqualPress = false;
     display.innerText = "0";
   },
 
@@ -92,8 +93,8 @@ const initialEval = function (operator) {
     calc.displayVal = calc.divide(calc.memory[0], calc.displayVal);
     calc.memory[0] = calc.displayVal;
   }
-  // calc.memory.shift();
-  calc.repeatEqualPress = true;
+
+  calc.repeatedEqualPress = true;
   display.innerText = calc.displayVal;
 };
 
@@ -110,8 +111,6 @@ const repeatedEval = function (operator) {
   display.innerText = calc.displayVal;
 };
 
-// will be added to equalsBtn && functionBtn event listeners
-// how to disable adding to memory if a function is pressed multiple times
 const evalOrderOperations = function () {
   let orderOpsVal, newVal;
   orderOpsVal =
@@ -124,17 +123,17 @@ const evalOrderOperations = function () {
       ? calc.add(calc.memory[0], orderOpsVal)
       : calc.subtract(calc.memory[0], orderOpsVal);
   console.log(`newVal: ${newVal}`);
-  calc.memory.push(newVal);
-  calc.memory.shift();
-  calc.memory.shift();
 
-  calc.operator1 = calc.operator2;
-  calc.operator2 = false;
-  calc.displayVal = newVal;
+  return newVal;
+  // calc.memory.push(newVal);
+  // calc.memory.shift();
+  // calc.memory.shift();
+  // calc.operator1 = calc.operator2;
+  // calc.operator2 = false;
+  // calc.displayVal = newVal;
   // display.innerText = calc.displayVal;
 };
 
-// TODO
 // EVENT LISTENERS
 buttons.forEach(function (button) {
   button.addEventListener("click", function () {
@@ -153,88 +152,110 @@ buttons.forEach(function (button) {
       }
     }
     // OPERATIONS
-    // FIXME
     if (btnClass === "function-btn") {
-      const lowOrderOperations = ["add", "subtract"];
       const highOrderOperations = ["multiply", "divide"];
+      const isHighOrderOperation = (op) =>
+        highOrderOperations.includes(op) ? true : false;
 
       // this block handles operations chained after hitting "=" one or more times
       // EX: 1 + 3 = 4 = 7 + 3 = 10
       // EX: 5 * 5 = 25 = 125 / 100 = 1.25
-      if (!calc.operator1 && !calc.repeatEqualPress) {
+      if (!calc.operator1 && !calc.repeatedEqualPress) {
         calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
-      } else if (!calc.operator1 && calc.repeatEqualPress) {
+      } else if (!calc.operator1 && calc.repeatedEqualPress) {
         calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
-        calc.repeatEqualPress = false;
-        calc.storedFunc = false;
+        calc.repeatedEqualPress = false;
+        calc.operator2 = false;
         calc.storedVal = "";
       }
-      // This block handles chained operator input for + and -
-      // EX: 1 + 1 + 1 + 1 = 4
-      // EX: 100 - 5 - 20 + 25 = 100
-      else if (
-        calc.operator1 &&
-        (btnValue === "add" || btnValue === "subtract")
-      ) {
-        calc.memory[1] = calc.displayVal;
-        calc.memory[0] =
-          calc.operator1 === "add"
-            ? calc.add(calc.memory[0], calc.memory[1])
-            : calc.subtract(calc.memory[0], calc.memory[1]);
-        calc.displayVal = calc.memory[0];
+      // Handles what happens after a chaining * or / operators then hitting =
+      // EX 2 * 6 * 12 = 144 = 1728 / 100 = 17.28
+      else if (calc.repeatedEqualPress) {
+        calc.operator1 = btnValue;
+        calc.memory[0] = display.innerText;
+        calc.repeatedEqualPress = false;
+        calc.operator2 = false;
+        calc.storedVal = "";
+      }
+      // This block handles chained operations starting with * or /
+      // EX 2 * 6 * 12 / 2 * 4 = 288
+      else if (isHighOrderOperation(calc.operator1)) {
+        calc.memory[0] = calc[`${calc.operator1}`](
+          calc.memory[0],
+          calc.displayVal
+        );
         calc.operator1 = btnValue;
         display.innerText = calc.memory[0];
-        calc.memory.pop();
       }
-      // This block handles multiply and divide as the first operator
 
-      // else if (
-      //   (btnValue === "add" || btnValue === "subtract") &&
-      //   !calc.repeatEqualPress
-      // ) {
-      //   calc.memory[1] = calc.displayVal;
-      //   calc.memory[0] =
-      //     calc.operator1 === "add"
-      //       ? calc.add(calc.memory[0], calc.memory[1])
-      //       : calc.subtract(calc.memory[0], calc.memory[1]);
-      //   calc.displayVal = calc.memory[0];
-      //   calc.memory.pop();
-      //   display.innerText = calc.displayVal;
-      // } else if (
-      //   lowOrderOperations.includes(calc.operator1) &&
-      //   highOrderOperations.includes(calc.operator2)
-      // ) {
-      //   // initialEval(calc.operator1);
-      //   // calc.memory.push(calc.displayVal);
-      //   // evalOrderOperations();
-      //   // display.innerText = calc.displayVal;
-      // } else {
-      //   calc.memory.push(calc.displayVal);
-      //   calc.operator2 = btnValue;
-      // }
+      // This block handles chained operator input for + and -
+      // EX: 1 + 1 + 1 + 1 = 4 = 5 = 6 etc.
+      // EX: 100 - 5 - 20 + 25 = 100 = 125 = 150 etc
+      else if (
+        !isHighOrderOperation(calc.operator1) &&
+        !isHighOrderOperation(btnValue)
+      ) {
+        calc.memory[0] = calc[`${calc.operator1}`](
+          calc.memory[0],
+          calc.displayVal
+        );
+        calc.operator1 = btnValue;
+        display.innerText = calc.memory[0];
+      }
+      // Handling for correct order of operations in chained operations
+      // I do need to add some logic to the "equals" section so it knows how to evaluate it correctly
+      // EX 2 + 6 * 2 = 14 = 28 = 56 etc.
+      // EX 2 + 6 * 2 * (display 12) 2 = 26
+      // first else if initiates the storing of order of operations sequence
+      else if (
+        !isHighOrderOperation(calc.operator1) &&
+        isHighOrderOperation(btnValue) &&
+        !calc.operator2
+      ) {
+        calc.memory[1] = calc.displayVal;
+        calc.operator2 = btnValue;
+      }
+      // this handles chained higher order operations
+      // EX 2 + 6 * 2 * 2 / 3 ... still no handing for when you hit "="
+      else if (
+        !isHighOrderOperation(calc.operator1) &&
+        isHighOrderOperation(btnValue) &&
+        calc.operator2
+      ) {
+        calc.memory[1] = calc[`${calc.operator2}`](
+          calc.memory[1],
+          calc.displayVal
+        );
+        display.innerText = calc.memory[1];
+        calc.operator2 = btnValue;
+      } /*else if (handling for chaining like 2 + 6 * 2 + 6 = 20 ) {
+        // do stuff
+      }*/
 
       calc.displayVal = "";
     }
 
     // EQUALS
     if (button.id === "equals") {
-      if (!calc.repeatEqualPress && !calc.operator2) {
+      if (!calc.repeatedEqualPress && !calc.operator2) {
+        // FIXME
+        // need to add handling for = press when op1 +- && storedOp */
+        // if ^ : storedVal = displayVal, call storedOp(memory[1], storedVal) return newVal, then op1(memory[1], newVal) return newDisplayVal --- clear op1, clear memory, repeatEquals=true
         calc.storedVal = calc.displayVal;
-        calc.storedFunc = calc.operator1;
+        calc.operator2 = calc.operator1;
         initialEval(calc.operator1);
-        // calc.storedVal = calc.memory[0];
+
         calc.memory = [];
         calc.operator1 = false;
-      } else if (calc.repeatEqualPress) {
-        // calc.memory.shift();
-        repeatedEval(calc.storedFunc);
+      } else if (calc.repeatedEqualPress) {
+        repeatedEval(calc.operator2);
       }
     }
 
     // FUNCTIONS
-    // FIXME *** clear/allClear not working somewhere. will look after order of operations is sorted out better
+    // TODO *** clear/allClear not working somewhere. will look after order of operations is sorted out better
     if (button.id === "clear") {
       calc.displayVal === "" ? calc.allClear() : calc.clear();
     }
