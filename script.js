@@ -1,15 +1,10 @@
 "use strict";
 // clone of iPhone SE calculator (basic operations only)
-// TODO = flagged to fix, lower priority
-
-// FIXME Need to add another operand to account for order of operations
 
 // Solving JS floating point math issues .1 +.2 = .300000000000004
 // To solve the problem above, it helps to multiply and divide:
 // let x = (0.2 * 10 + 0.1 * 10) / 10;
 // how/when to implement that?
-
-// Clear/All Clear button needs fine tuning
 
 // HTML/CSS needs a major revamp
 // add handling for keyboard entry ?(if(keypress is in [keyboard, events, in, array] do the operation at the index that matches the key event...something like that)
@@ -43,14 +38,13 @@ const calc = {
 
   clear() {
     this.decimal = false;
-    this.operator1 = false;
-    this.operator2 = false;
     this.displayVal = "";
     display.innerText = "0";
   },
 
   allClear() {
     this.memory = [];
+    this.storedVal = "";
     this.decimal = false;
     this.operator1 = false;
     this.operator2 = false;
@@ -60,53 +54,33 @@ const calc = {
   },
 
   sign() {
-    // not quite matching iPhone functionality here -- I want sign() > -0 > -x
-    // this.displayVal != 0
-    //   ? (this.displayVal = -this.displayVal)
-    //   : (this.displayVal = String("-0"));
-    this.displayVal = -Number(this.displayVal);
-    this.displayVal = String(this.displayVal);
-    display.innerText = this.displayVal;
+    if (this.displayVal != "") {
+      this.displayVal = -Number(this.displayVal).toString();
+      display.innerText = this.displayVal;
+    } else if (display.innerText === "-0") {
+      display.innerText = "0";
+    } else {
+      display.innerText = "-0";
+      this.displayVal = "-0";
+    }
   },
-  // need to do some rounding to account for weird JS number issues
   percentage() {
     this.displayVal = (Number(this.displayVal) / 100).toString();
   },
 };
-
-const evalOrderOperations = function () {
-  let orderOpsVal, newVal;
-  orderOpsVal =
-    calc.operator2 === "multiply"
-      ? calc.multiply(calc.memory[1], calc.memory[2])
-      : calc.divide(calc.memory[1], calc.memory[2]);
-  console.log(`orderOpsVal: ${orderOpsVal}`);
-  newVal =
-    calc.operator1 === "add"
-      ? calc.add(calc.memory[0], orderOpsVal)
-      : calc.subtract(calc.memory[0], orderOpsVal);
-  console.log(`newVal: ${newVal}`);
-
-  return newVal;
-  // calc.memory.push(newVal);
-  // calc.memory.shift();
-  // calc.memory.shift();
-  // calc.operator1 = calc.operator2;
-  // calc.operator2 = false;
-  // calc.displayVal = newVal;
-  // display.innerText = calc.displayVal;
-};
-
 // EVENT LISTENERS
 buttons.forEach(function (button) {
   button.addEventListener("click", function () {
     const btnValue = button.value;
     const btnClass = button.className;
+    const highOrderOperations = ["multiply", "divide"];
+    const isHighOrderOperation = (op) =>
+      highOrderOperations.includes(op) || false;
 
     // INPUT NUMBER VALUES AS STRINGS
     if (btnClass === "number-btn") {
-      if (!calc.decimal) {
-        calc.displayVal = calc.displayVal.concat(btnValue);
+      if (calc.displayVal === "-0") {
+        calc.displayVal = calc.displayVal.replace("0", btnValue);
         display.innerText = calc.displayVal;
       } else {
         calc.displayVal = calc.displayVal.concat(btnValue);
@@ -115,27 +89,10 @@ buttons.forEach(function (button) {
     }
     // OPERATIONS
     if (btnClass === "function-btn") {
-      const highOrderOperations = ["multiply", "divide"];
-      const isHighOrderOperation = (op) =>
-        highOrderOperations.includes(op) || false;
-
-      // this block handles operations chained after hitting "=" one or more times
-      // EX: 1 + 3 = 4 = 7 + 3 = 10
-      // EX: 5 * 5 = 25 = 125 / 100 = 1.25
       if (!calc.operator1) {
         calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
-      } /*else if (!calc.operator1 && calc.repeatedEqualPress) {
-        calc.memory.push(calc.displayVal);
-        calc.operator1 = btnValue;
-        calc.repeatedEqualPress = false;
-        calc.operator2 = false;
-        calc.storedVal = "";
-      } */
-
-      // Handles what happens after a chaining * or / operators then hitting =
-      // EX 2 * 6 * 12 = 144 = 1728 / 100 = 17.28
-      else if (calc.repeatedEqualPress) {
+      } else if (calc.repeatedEqualPress) {
         calc.operator1 = btnValue;
         calc.memory[0] = display.innerText;
         calc.repeatedEqualPress = false;
@@ -158,7 +115,8 @@ buttons.forEach(function (button) {
       // EX: 100 - 5 - 20 + 25 = 100 = 125 = 150 etc
       else if (
         !isHighOrderOperation(calc.operator1) &&
-        !isHighOrderOperation(btnValue)
+        !isHighOrderOperation(btnValue) &&
+        !calc.operator2
       ) {
         calc.memory[0] = calc[`${calc.operator1}`](
           calc.memory[0],
@@ -168,58 +126,95 @@ buttons.forEach(function (button) {
         display.innerText = calc.memory[0];
       }
       // Handling for correct order of operations in chained operations
-      // I do need to add some logic to the "equals" section so it knows how to evaluate it correctly
       // EX 2 + 6 * 2 = 14 = 28 = 56 etc.
-      // EX 2 + 6 * 2 * (display 12) 2 = 26
-      // first else if initiates the storing of order of operations sequence
       else if (
         !isHighOrderOperation(calc.operator1) &&
         isHighOrderOperation(btnValue) &&
         !calc.operator2
       ) {
-        calc.memory[1] = calc.displayVal;
         calc.operator2 = btnValue;
-      }
-      // this handles chained higher order operations
-      // EX 2 + 6 * 2 * 2 / 3 ... still no handing for when you hit "="
-      else if (
+        calc.memory[1] = calc.displayVal;
+
+        // handling for chained operations like:
+        // 2 + 6 * 2 + 6 = 20 = 26 = 32 etc.
+      } else if (
         !isHighOrderOperation(calc.operator1) &&
-        isHighOrderOperation(btnValue) &&
-        calc.operator2
+        !isHighOrderOperation(btnValue)
       ) {
+        calc.storedVal = calc.displayVal;
         calc.memory[1] = calc[`${calc.operator2}`](
           calc.memory[1],
           calc.displayVal
         );
-        display.innerText = calc.memory[1];
+        calc.displayVal = calc[`${calc.operator1}`](
+          calc.memory[0],
+          calc.memory[1]
+        );
+        calc.memory = [];
+        calc.operator1 = btnValue;
+        calc.operator2 = false;
+        calc.memory[0] = calc.displayVal;
+        display.innerText = calc.displayVal;
+      } else if (
+        !isHighOrderOperation(calc.operator1) &&
+        isHighOrderOperation(btnValue)
+      ) {
+        calc.storedVal = calc.displayVal;
+        calc.memory[1] = calc[`${calc.operator2}`](
+          calc.memory[1],
+          calc.displayVal
+        );
         calc.operator2 = btnValue;
-      } /*else if (handling for chaining like 2 + 6 * 2 + 6 = 20 ) {
-        // do stuff
-      }*/
+        calc.displayVal = calc.memory[1];
+        display.innerText = calc.displayVal;
+      }
 
       calc.displayVal = "";
+      calc.decimal = false;
     }
 
     // EQUALS
-    // FIXME
-    // 1) Proper handling for order of operations
-    // 2) Fix what I broke with repeatEquals - I need to save the +2 of 1+2=3. Had it before, refactored, broke it. Probably a more graceful way to handle it though. Maybe just go back to an else if for that
     if (button.id === "equals") {
-      // need to add handling for = press when op1 +- && storedOp */
-      // if ^ : storedVal = displayVal, call storedOp(memory[1], storedVal) return newVal, then op1(memory[1], newVal) return newDisplayVal --- clear op1, clear memory, repeatEquals=true
-      calc.displayVal = display.innerText;
-      calc.storedVal = calc.calc.displayVal = calc.repeatedEqualPress
-        ? calc[`${calc.operator1}`](calc.storedVal, calc.displayVal)
-        : calc[`${calc.operator1}`](calc.memory[0], calc.displayVal);
-
-      display.innerText = calc.displayVal;
-      calc.repeatedEqualPress = true;
+      if (
+        !isHighOrderOperation(calc.operator1) &&
+        isHighOrderOperation(calc.operator2)
+      ) {
+        calc.storedVal = calc.displayVal;
+        calc.memory[1] = calc[`${calc.operator2}`](
+          calc.memory[1],
+          calc.displayVal
+        );
+        calc.displayVal = calc[`${calc.operator1}`](
+          calc.memory[0],
+          calc.memory[1]
+        );
+        display.innerText = calc.displayVal;
+        calc.operator1 = calc.operator2;
+        calc.operator2 = false;
+        calc.memory = [];
+        calc.repeatedEqualPress = true;
+      } else if (!calc.repeatedEqualPress) {
+        calc.storedVal = display.innerText;
+        calc.displayVal = calc[`${calc.operator1}`](
+          calc.memory[0],
+          display.innerText
+        );
+        display.innerText = calc.displayVal;
+        calc.repeatedEqualPress = true;
+        calc.memory = [];
+      } else {
+        calc.displayVal = calc[`${calc.operator1}`](
+          calc.displayVal,
+          calc.storedVal
+        );
+        display.innerText = calc.displayVal;
+      }
     }
 
     // FUNCTIONS
     // TODO *** clear/allClear not working somewhere. will look after order of operations is sorted out better
     if (button.id === "clear") {
-      calc.displayVal === "" ? calc.allClear() : calc.clear();
+      clearBtn.innerText === "AC" ? calc.allClear() : calc.clear();
     }
     if (button.id === "sign") {
       calc.sign();
@@ -229,18 +224,16 @@ buttons.forEach(function (button) {
       display.innerText = calc.displayVal;
     }
     if (button.id === "decimal" && calc.decimal === false) {
-      calc.displayVal += ".";
+      calc.displayVal === ""
+        ? (calc.displayVal = "0.")
+        : (calc.displayVal += ".");
       calc.decimal = true;
       display.innerText = calc.displayVal;
     }
 
     // not quite right, here's what I want: after "1 + 3" > Clear, btn = AC display = 0 "+" button has hover effect to show that is the previously selected operation
-    // needs a refactor post PEMDAS update anyhow
-    calc.displayVal == 0 && !calc.function
+    display.innerText === "0" && !calc.operator1
       ? (clearBtn.innerText = "AC")
       : (clearBtn.innerText = "C");
-
-    // add a display.innerText = calc.displayVal here in lieu of calls elsewhere, maybe?
-    // display.innerText = calc.displayVal;
   });
 });
