@@ -20,18 +20,14 @@ const buttons = document.querySelectorAll("button");
 const clearBtn = document.querySelector("#clear");
 
 const calc = {
-  // STATE
   memory: [],
   displayVal: "",
   operator1: false,
   operator2: false,
   storedVal: "",
   decimal: false,
-  // currently not using this as a state anywhere
-  // orderOperations: false,
   repeatedEqualPress: false,
 
-  // METHODS
   add: (val1, val2) => {
     return (Number(val1) + Number(val2)).toString();
   },
@@ -75,40 +71,7 @@ const calc = {
   // need to do some rounding to account for weird JS number issues
   percentage() {
     this.displayVal = (Number(this.displayVal) / 100).toString();
-    // this.displayVal = String(this.displayVal);
   },
-};
-
-const initialEval = function (operator) {
-  calc.displayVal = display.innerText;
-
-  if (operator === "add") {
-    calc.displayVal = calc.add(calc.memory[0], calc.displayVal);
-  } else if (operator === "subtract") {
-    calc.displayVal = calc.subtract(calc.memory[0], calc.displayVal);
-    calc.memory[0] = calc.displayVal;
-  } else if (operator === "multiply") {
-    calc.displayVal = calc.multiply(calc.memory[0], calc.displayVal);
-  } else if (operator === "divide") {
-    calc.displayVal = calc.divide(calc.memory[0], calc.displayVal);
-    calc.memory[0] = calc.displayVal;
-  }
-
-  calc.repeatedEqualPress = true;
-  display.innerText = calc.displayVal;
-};
-
-const repeatedEval = function (operator) {
-  if (operator === "add") {
-    calc.displayVal = calc.add(calc.storedVal, calc.displayVal);
-  } else if (operator === "subtract") {
-    calc.displayVal = calc.subtract(calc.displayVal, calc.storedVal);
-  } else if (operator === "multiply") {
-    calc.displayVal = calc.multiply(calc.storedVal, calc.displayVal);
-  } else if (operator === "divide") {
-    calc.displayVal = calc.divide(calc.displayVal, calc.storedVal);
-  }
-  display.innerText = calc.displayVal;
 };
 
 const evalOrderOperations = function () {
@@ -145,7 +108,6 @@ buttons.forEach(function (button) {
       if (!calc.decimal) {
         calc.displayVal = calc.displayVal.concat(btnValue);
         display.innerText = calc.displayVal;
-        // calc.displayVal = Number(calc.displayVal);
       } else {
         calc.displayVal = calc.displayVal.concat(btnValue);
         display.innerText = calc.displayVal;
@@ -155,21 +117,22 @@ buttons.forEach(function (button) {
     if (btnClass === "function-btn") {
       const highOrderOperations = ["multiply", "divide"];
       const isHighOrderOperation = (op) =>
-        highOrderOperations.includes(op) ? true : false;
+        highOrderOperations.includes(op) || false;
 
       // this block handles operations chained after hitting "=" one or more times
       // EX: 1 + 3 = 4 = 7 + 3 = 10
       // EX: 5 * 5 = 25 = 125 / 100 = 1.25
-      if (!calc.operator1 && !calc.repeatedEqualPress) {
+      if (!calc.operator1) {
         calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
-      } else if (!calc.operator1 && calc.repeatedEqualPress) {
+      } /*else if (!calc.operator1 && calc.repeatedEqualPress) {
         calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
         calc.repeatedEqualPress = false;
         calc.operator2 = false;
         calc.storedVal = "";
-      }
+      } */
+
       // Handles what happens after a chaining * or / operators then hitting =
       // EX 2 * 6 * 12 = 144 = 1728 / 100 = 17.28
       else if (calc.repeatedEqualPress) {
@@ -238,20 +201,19 @@ buttons.forEach(function (button) {
     }
 
     // EQUALS
+    // FIXME
+    // 1) Proper handling for order of operations
+    // 2) Fix what I broke with repeatEquals - I need to save the +2 of 1+2=3. Had it before, refactored, broke it. Probably a more graceful way to handle it though. Maybe just go back to an else if for that
     if (button.id === "equals") {
-      if (!calc.repeatedEqualPress && !calc.operator2) {
-        // FIXME
-        // need to add handling for = press when op1 +- && storedOp */
-        // if ^ : storedVal = displayVal, call storedOp(memory[1], storedVal) return newVal, then op1(memory[1], newVal) return newDisplayVal --- clear op1, clear memory, repeatEquals=true
-        calc.storedVal = calc.displayVal;
-        calc.operator2 = calc.operator1;
-        initialEval(calc.operator1);
+      // need to add handling for = press when op1 +- && storedOp */
+      // if ^ : storedVal = displayVal, call storedOp(memory[1], storedVal) return newVal, then op1(memory[1], newVal) return newDisplayVal --- clear op1, clear memory, repeatEquals=true
+      calc.displayVal = display.innerText;
+      calc.storedVal = calc.calc.displayVal = calc.repeatedEqualPress
+        ? calc[`${calc.operator1}`](calc.storedVal, calc.displayVal)
+        : calc[`${calc.operator1}`](calc.memory[0], calc.displayVal);
 
-        calc.memory = [];
-        calc.operator1 = false;
-      } else if (calc.repeatedEqualPress) {
-        repeatedEval(calc.operator2);
-      }
+      display.innerText = calc.displayVal;
+      calc.repeatedEqualPress = true;
     }
 
     // FUNCTIONS
