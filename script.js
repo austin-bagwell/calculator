@@ -1,15 +1,6 @@
 "use strict";
 // clone of iPhone SE calculator (basic operations only)
 
-// Solving JS floating point math issues .1 +.2 = .300000000000004
-// To solve the problem above, it helps to multiply and divide:
-// let x = (0.2 * 10 + 0.1 * 10) / 10;
-// how/when to implement that?
-
-// HTML/CSS needs a major revamp
-// add handling for keyboard entry ?(if(keypress is in [keyboard, events, in, array] do the operation at the index that matches the key event...something like that)
-// refactor as needed
-
 let display = document.querySelector("#display");
 const buttons = document.querySelectorAll("button");
 const clearBtn = document.querySelector("#clear");
