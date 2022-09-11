@@ -88,7 +88,7 @@ buttons.forEach(function (button) {
       }
     }
     // OPERATIONS
-    if (btnClass === "function-btn") {
+    if (btnClass === "operator-btn") {
       if (!calc.operator1) {
         calc.memory.push(calc.displayVal);
         calc.operator1 = btnValue;
@@ -212,7 +212,6 @@ buttons.forEach(function (button) {
     }
 
     // FUNCTIONS
-    // TODO *** clear/allClear not working somewhere. will look after order of operations is sorted out better
     if (button.id === "clear") {
       clearBtn.innerText === "AC" ? calc.allClear() : calc.clear();
     }
@@ -231,7 +230,6 @@ buttons.forEach(function (button) {
       display.innerText = calc.displayVal;
     }
 
-    // not quite right, here's what I want: after "1 + 3" > Clear, btn = AC display = 0 "+" button has hover effect to show that is the previously selected operation
     display.innerText === "0" && !calc.operator1
       ? (clearBtn.innerText = "AC")
       : (clearBtn.innerText = "C");

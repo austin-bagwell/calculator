@@ -12,42 +12,40 @@
     <div class="container">
       <div class="calculator">
         <!-- ROW 0 DISPLAY -->
-        <div class="row" id="display-wrapper">
-          <span id="display">0</span>
+        <div class="display-container">
+          <span class="display-box" id="display">0</span>
         </div>
         <!-- ROW 1 -->
-        <div class="row" id="row-1">
-          <button class="function-btn" id="clear" value="clear">AC</button>
-          <button class="function-btn" id="sign" value="sign">+/-</button>
-          <button class="function-btn" id="percent" value="percent">%</button>
-          <button class="operator-btn" id="divide" value="divide">/</button>
+        <div class="btn-row" id="row-1">
+          <button class="operator-btn" id="clear" value="clear">AC</button>
+          <button class="operator-btn" id="sign" value="sign">+/-</button>
+          <button class="operator-btn" id="percent" value="percent">%</button>
+          <button class="function-btn" id="divide" value="divide">/</button>
         </div>
         <!-- ROW 2 -->
-        <div class="row" id="row-2">
+        <div class="btn-row" id="row-2">
           <button class="number-btn" id="7" value="7">7</button>
           <button class="number-btn" id="8" value="8">8</button>
           <button class="number-btn" id="9" value="9">9</button>
-          <button class="operator-btn" id="multiply" value="multiply">*</button>
+          <button class="function-btn" id="multiply" value="multiply">*</button>
         </div>
         <!-- ROW 3 -->
-        <div class="row" id="row-3">
+        <div class="btn-row" id="row-3">
           <button class="number-btn" id="4" value="4">4</button>
           <button class="number-btn" id="5" value="5">5</button>
           <button class="number-btn" id="6" value="6">6</button>
-          <button class="operator-btn" id="subtract" value="subtract">-</button>
+          <button class="function-btn" id="subtract" value="subtract">-</button>
         </div>
         <!-- ROW 4 -->
-        <div class="row" id="row-4">
+        <div class="btn-row" id="row-4">
           <button class="number-btn" id="1" value="1">1</button>
           <button class="number-btn" id="2" value="2">2</button>
           <button class="number-btn" id="3" value="3">3</button>
-          <button class="operator-btn" id="add" value="add">+</button>
+          <button class="function-btn" id="add" value="add">+</button>
         </div>
         <!-- ROW 5 -->
-        <div class="row" id="row-5">
-          <button class="number-btn" id="zero" value="0" colspan="2">
-            <span id="zero-span">0</span>
-          </button>
+        <div class="btn-row" id="row-5">
+          <button class="number-btn" id="zero" value="0" colspan="2">0</button>
           <button class="decimal-btn" id="decimal" value="decimal">.</button>
           <button class="equals-btn" id="equals" value="equals">=</button>
         </div>
