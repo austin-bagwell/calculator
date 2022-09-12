@@ -59,6 +59,7 @@ const calc = {
     this.displayVal = (Number(this.displayVal) / 100).toString();
   },
 };
+
 // EVENT LISTENERS
 buttons.forEach(function (button) {
   button.addEventListener("click", function () {
@@ -70,7 +71,15 @@ buttons.forEach(function (button) {
 
     // INPUT NUMBER VALUES AS STRINGS
     if (btnClass === "number-btn") {
-      if (calc.displayVal === "-0") {
+      const onlyDigits = (displayStr) => {
+        displayStr = displayStr.replace(".", "");
+        displayStr = displayStr.replace("-", "");
+        return displayStr;
+      };
+
+      if (onlyDigits(calc.displayVal).length >= 9) {
+        return;
+      } else if (calc.displayVal === "-0" || calc.displayVal === "0") {
         calc.displayVal = calc.displayVal.replace("0", btnValue);
         display.innerText = calc.displayVal;
       } else {
@@ -90,6 +99,11 @@ buttons.forEach(function (button) {
         calc.operator2 = false;
         calc.storedVal = "";
       }
+      // FIXME
+      // The calculator breaks when you use an operator twice in a row.
+      // To reproduce just type a number and then press the "/" button twice. It will show infinity.
+      // This error persists when you push the clear button. Pressing any operator button will now show infinity.
+
       // This block handles chained operations starting with * or /
       // EX 2 * 6 * 12 / 2 * 4 = 288
       else if (isHighOrderOperation(calc.operator1)) {
@@ -165,6 +179,7 @@ buttons.forEach(function (button) {
     }
 
     // EQUALS
+    // FIXME  hitting = before inputting operator leads to error
     if (button.id === "equals") {
       if (
         !isHighOrderOperation(calc.operator1) &&
@@ -224,5 +239,22 @@ buttons.forEach(function (button) {
     display.innerText === "0" && !calc.operator1
       ? (clearBtn.innerText = "AC")
       : (clearBtn.innerText = "C");
+
+    if (
+      Number(display.innerText > 999999999) ||
+      Number(display.innerText < -999999999)
+    ) {
+      function expo(num) {
+        return Number.parseFloat(num).toExponential();
+      }
+      display.innerText = expo(display.innerText).toString();
+    }
+
+    if (Number(display.innerText > 999) || Number(display.innerText < -999)) {
+      display.innerText = display.innerText.replace(
+        /(\d)(?=(\d\d\d)+(?!\d))/g,
+        "$1,"
+      );
+    }
   });
 });
