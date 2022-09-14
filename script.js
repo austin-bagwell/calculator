@@ -69,14 +69,14 @@ buttons.forEach(function (button) {
     const isHighOrderOperation = (op) =>
       highOrderOperations.includes(op) || false;
 
+    const onlyDigits = (displayStr) => {
+      displayStr = displayStr.replace(".", "");
+      displayStr = displayStr.replace("-", "");
+      return displayStr;
+    };
+
     // INPUT NUMBER VALUES AS STRINGS
     if (btnClass === "number-btn") {
-      const onlyDigits = (displayStr) => {
-        displayStr = displayStr.replace(".", "");
-        displayStr = displayStr.replace("-", "");
-        return displayStr;
-      };
-
       if (onlyDigits(calc.displayVal).length >= 9) {
         return;
       } else if (calc.displayVal === "-0" || calc.displayVal === "0") {
@@ -103,7 +103,7 @@ buttons.forEach(function (button) {
       // The calculator breaks when you use an operator twice in a row.
       // To reproduce just type a number and then press the "/" button twice. It will show infinity.
       // This error persists when you push the clear button. Pressing any operator button will now show infinity.
-
+      // add a counter, if count > 0, dont allow further operator entry? count would be reset on some other button click... which button click? any? idk
       // This block handles chained operations starting with * or /
       // EX 2 * 6 * 12 / 2 * 4 = 288
       else if (isHighOrderOperation(calc.operator1)) {
@@ -179,7 +179,6 @@ buttons.forEach(function (button) {
     }
 
     // EQUALS
-    // FIXME  hitting = before inputting operator leads to error
     if (button.id === "equals") {
       if (
         !isHighOrderOperation(calc.operator1) &&
@@ -247,6 +246,8 @@ buttons.forEach(function (button) {
       function expo(num) {
         return Number.parseFloat(num).toExponential();
       }
+      display.innerText = expo(display.innerText).toString();
+    } else if (onlyDigits(display.innerText).length >= 9) {
       display.innerText = expo(display.innerText).toString();
     }
 
