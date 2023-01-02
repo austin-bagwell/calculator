@@ -98,27 +98,14 @@ buttons.forEach(function (button) {
         calc.repeatedEqualPress = false;
         calc.operator2 = false;
         calc.storedVal = "";
-      }
-      // FIXME
-      // The calculator breaks when you use an operator twice in a row.
-      // To reproduce just type a number and then press the "/" button twice. It will show infinity.
-      // This error persists when you push the clear button. Pressing any operator button will now show infinity.
-      // add a counter, if count > 0, dont allow further operator entry? count would be reset on some other button click... which button click? any? idk
-      // This block handles chained operations starting with * or /
-      // EX 2 * 6 * 12 / 2 * 4 = 288
-      else if (isHighOrderOperation(calc.operator1)) {
+      } else if (isHighOrderOperation(calc.operator1)) {
         calc.memory[0] = calc[`${calc.operator1}`](
           calc.memory[0],
           calc.displayVal
         );
         calc.operator1 = btnValue;
         display.innerText = calc.memory[0];
-      }
-
-      // This block handles chained operator input for + and -
-      // EX: 1 + 1 + 1 + 1 = 4 = 5 = 6 etc.
-      // EX: 100 - 5 - 20 + 25 = 100 = 125 = 150 etc
-      else if (
+      } else if (
         !isHighOrderOperation(calc.operator1) &&
         !isHighOrderOperation(btnValue) &&
         !calc.operator2
@@ -129,19 +116,13 @@ buttons.forEach(function (button) {
         );
         calc.operator1 = btnValue;
         display.innerText = calc.memory[0];
-      }
-      // Handling for correct order of operations in chained operations
-      // EX 2 + 6 * 2 = 14 = 28 = 56 etc.
-      else if (
+      } else if (
         !isHighOrderOperation(calc.operator1) &&
         isHighOrderOperation(btnValue) &&
         !calc.operator2
       ) {
         calc.operator2 = btnValue;
         calc.memory[1] = calc.displayVal;
-
-        // handling for chained operations like:
-        // 2 + 6 * 2 + 6 = 20 = 26 = 32 etc.
       } else if (
         !isHighOrderOperation(calc.operator1) &&
         !isHighOrderOperation(btnValue)
